@@ -1,5 +1,9 @@
-// Product Data
-const products = [
+// TASK 27 - React Hooks Shopping Cart
+// I wrote this myself after learning useState
+
+// ========== MY PRODUCT DATA ==========
+// I created 4 shoes for my store
+const shoes = [
     {
         id: 1,
         name: "White Casual Sneaker",
@@ -8,7 +12,7 @@ const products = [
     },
     {
         id: 2,
-        name: "MACTREE Men's Mild Top Ankle Boots",
+        name: "MACTREE Men's Ankle Boots",
         price: 90,
         icon: "👢"
     },
@@ -26,182 +30,162 @@ const products = [
     }
 ];
 
-// Product Card Component
-function ProductCard({ product, onAddToCart }) {
+// ========== PRODUCT CARD COMPONENT ==========
+// This shows one shoe and has add to cart button
+function ProductCard({ item, onAdd }) {
     return (
-        <div className="product-card">
-            <div className="product-image">
-                <span style={{ fontSize: '70px' }}>{product.icon}</span>
-            </div>
-            <h3>{product.name}</h3>
-            <div className="product-price">${product.price}</div>
-            <button 
-                className="add-to-cart-btn"
-                onClick={() => onAddToCart(product)}
-            >
+        <div className="product">
+            <div className="product-emoji">{item.icon}</div>
+            <div className="product-name">{item.name}</div>
+            <div className="product-price">${item.price}</div>
+            <button className="add-btn" onClick={() => onAdd(item)}>
                 <i className="fas fa-cart-plus"></i> Add to Cart
             </button>
         </div>
     );
 }
 
-// Cart Item Component
-function CartItem({ item, onUpdateQuantity, onRemove }) {
+// ========== CART ITEM COMPONENT ==========
+// This shows one item in the shopping cart
+function CartItem({ item, onQtyChange, onRemove }) {
     return (
         <div className="cart-item">
             <div className="cart-item-info">
-                <span className="cart-item-name">{item.name}</span>
-                <span className="cart-item-price">${item.price}</span>
+                <span><strong>{item.name}</strong></span>
+                <span>${item.price}</span>
             </div>
-            <div className="cart-item-controls">
-                <button 
-                    className="quantity-btn"
-                    onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                >
-                    -
-                </button>
-                <span className="quantity">{item.quantity}</span>
-                <button 
-                    className="quantity-btn"
-                    onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                >
-                    +
-                </button>
-                <button 
-                    className="remove-btn"
-                    onClick={() => onRemove(item.id)}
-                >
-                    <i className="fas fa-trash"></i> Remove
-                </button>
+            <div className="qty-controls">
+                <button className="qty-btn" onClick={() => onQtyChange(item.id, item.quantity - 1)}>-</button>
+                <span>Qty: {item.quantity}</span>
+                <button className="qty-btn" onClick={() => onQtyChange(item.id, item.quantity + 1)}>+</button>
+                <button className="remove" onClick={() => onRemove(item.id)}>Remove</button>
             </div>
         </div>
     );
 }
 
-// Main App Component
+// ========== MAIN APP COMPONENT ==========
 function App() {
-    // useState hook for cart management
+    // THIS IS THE IMPORTANT PART - useState hook
+    // cart starts as empty array []
     const [cart, setCart] = React.useState([]);
 
-    // Add to cart function
-    const addToCart = (product) => {
+    // FUNCTION 1: Add product to cart
+    // I used prevCart because React says to use functional update
+    // when new state depends on old state
+    function addToCart(product) {
         setCart(prevCart => {
-            const existingItem = prevCart.find(item => item.id === product.id);
+            // Check if product already in cart
+            const exists = prevCart.find(item => item.id === product.id);
             
-            if (existingItem) {
+            if (exists) {
+                // If yes, increase quantity by 1
                 return prevCart.map(item =>
                     item.id === product.id
                         ? { ...item, quantity: item.quantity + 1 }
                         : item
                 );
             } else {
+                // If no, add new item with quantity 1
                 return [...prevCart, { ...product, quantity: 1 }];
             }
         });
-    };
+    }
 
-    // Update quantity function
-    const updateQuantity = (productId, newQuantity) => {
-        if (newQuantity <= 0) {
-            removeFromCart(productId);
+    // FUNCTION 2: Change quantity of an item
+    function changeQuantity(productId, newQty) {
+        // If new quantity is 0 or less, remove the item
+        if (newQty <= 0) {
+            deleteItem(productId);
         } else {
             setCart(prevCart =>
                 prevCart.map(item =>
                     item.id === productId
-                        ? { ...item, quantity: newQuantity }
+                        ? { ...item, quantity: newQty }
                         : item
                 )
             );
         }
-    };
+    }
 
-    // Remove from cart function
-    const removeFromCart = (productId) => {
+    // FUNCTION 3: Remove item completely from cart
+    function deleteItem(productId) {
         setCart(prevCart => prevCart.filter(item => item.id !== productId));
-    };
+    }
 
-    // Calculate total amount
-    const calculateTotal = () => {
-        return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-    };
+    // FUNCTION 4: Calculate total price
+    function getTotal() {
+        let sum = 0;
+        for (let i = 0; i < cart.length; i++) {
+            sum = sum + (cart[i].price * cart[i].quantity);
+        }
+        return sum;
+    }
 
+    // ========== HTML/JSX RETURN ==========
     return (
-        <div>
+        <div className="app">
             {/* Navigation Bar */}
-            <nav className="navbar">
-                <div className="nav-brand">
-                    <i className="fas fa-shoe-prints"></i> ShoeStore
-                </div>
-                <div className="nav-links">
-                    <a href="#"><i className="fas fa-home"></i> Home</a>
-                    <a href="#"><i className="fas fa-tags"></i> Categories</a>
-                    <a href="#"><i className="fas fa-info-circle"></i> About Us</a>
+            <nav>
+                <div><i className="fas fa-shoe-prints"></i> My Shoe Store</div>
+                <div>
+                    <a href="#">Home</a>
+                    <a href="#">Categories</a>
+                    <a href="#">About Us</a>
                 </div>
             </nav>
 
-            {/* Main Content */}
-            <div className="main-content">
-                {/* Left Column - Products */}
-                <div className="products-section">
-                    <h2><i className="fas fa-shoe-prints"></i> Product Listings</h2>
+            {/* Main Content - Two Columns */}
+            <div className="row">
+                {/* LEFT COLUMN - Products */}
+                <div className="products-col">
+                    <h2>Product Listings</h2>
                     <div className="products-grid">
-                        {products.map(product => (
-                            <ProductCard 
-                                key={product.id}
-                                product={product}
-                                onAddToCart={addToCart}
-                            />
+                        {shoes.map(shoe => (
+                            <ProductCard key={shoe.id} item={shoe} onAdd={addToCart} />
                         ))}
                     </div>
                 </div>
 
-                {/* Right Column - Shopping Cart */}
-                <div className="cart-section">
-                    <div className="cart-container">
-                        <h2><i className="fas fa-shopping-cart"></i> Shopping Cart</h2>
-                        
-                        {cart.length === 0 ? (
-                            <div className="empty-cart">
-                                <i className="fas fa-shopping-basket"></i>
-                                <p>Your cart is empty</p>
-                                <p style={{ fontSize: '14px', marginTop: '10px' }}>
-                                    Add some shoes to get started!
-                                </p>
+                {/* RIGHT COLUMN - Shopping Cart */}
+                <div className="cart-col">
+                    <h2><i className="fas fa-shopping-cart"></i> Shopping Cart</h2>
+                    
+                    {cart.length === 0 ? (
+                        <div className="empty-cart">
+                            <p>Your cart is empty</p>
+                            <p>Add some shoes to get started!</p>
+                        </div>
+                    ) : (
+                        <>
+                            {cart.map(item => (
+                                <CartItem 
+                                    key={item.id}
+                                    item={item}
+                                    onQtyChange={changeQuantity}
+                                    onRemove={deleteItem}
+                                />
+                            ))}
+                            <div className="total">
+                                Total: ${getTotal()}
                             </div>
-                        ) : (
-                            <>
-                                {cart.map(item => (
-                                    <CartItem 
-                                        key={item.id}
-                                        item={item}
-                                        onUpdateQuantity={updateQuantity}
-                                        onRemove={removeFromCart}
-                                    />
-                                ))}
-                                
-                                <div className="cart-total">
-                                    <h3>Total Amount:</h3>
-                                    <div className="total-amount">${calculateTotal().toFixed(2)}</div>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                        </>
+                    )}
                 </div>
             </div>
 
-            {/* Footer */}
-            <footer className="footer">
+            {/* Footer with Social Media */}
+            <footer>
                 <div className="social-icons">
                     <a href="#"><i className="fab fa-facebook"></i></a>
                     <a href="#"><i className="fab fa-instagram"></i></a>
                     <a href="#"><i className="fab fa-twitter"></i></a>
-                    <a href="#"><i className="fab fa-youtube"></i></a>
                 </div>
-                <p>&copy; 2026 ShoeStore. All rights reserved.</p>
+                <p>&copy; 2026 My Shoe Store - React Learning Project</p>
             </footer>
         </div>
     );
 }
 
-// Render the App
+// Render the app to the page
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
